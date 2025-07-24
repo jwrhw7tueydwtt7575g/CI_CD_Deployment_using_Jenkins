@@ -1,9 +1,14 @@
-Jenkins with Docker and AWS Deployment
-Overview
+# Jenkins with Docker and AWS Deployment Overview
+
 This README provides a comprehensive guide to setting up a Jenkins instance with Docker-in-Docker (DinD), installing necessary tools, building and deploying Docker images, and integrating AWS CLI for deployment.
 
-Dockerfile
-# Use the Jenkins image as the base image
+---
+
+## 📦 Dockerfile
+
+Use the Jenkins image as the base image:
+
+```Dockerfile
 FROM jenkins/jenkins:lts
 
 # Switch to root user to install dependencies
@@ -22,42 +27,51 @@ RUN apt-get update -y && \
 RUN groupadd -f docker && \
     usermod -aG docker jenkins
 
-# Create the Docker directory and volume for DinD
+# Create Docker directory and volume for DinD
 RUN mkdir -p /var/lib/docker
 VOLUME /var/lib/docker
 
-# Switch back to the Jenkins user
+# Switch back to Jenkins user
 USER jenkins
-
-Commands
-Build Docker Image
+🔧 Build Docker Image
+bash
+Copy
+Edit
 docker build -t jenkins-dind .
-
-Kill Process on Port 8080 (Windows)
-netstat -ano | find ":8080"            taskkill /PID <PID> /F
-
-Run Jenkins with Docker-in-Docker
+🛠️ Kill Process on Port 8080 (Windows)
+bash
+Copy
+Edit
+netstat -ano | find ":8080"
+taskkill /PID <PID> /F
+🚀 Run Jenkins with Docker-in-Docker
+bash
+Copy
+Edit
 docker run -d --name jenkins-dind ^
---privileged ^
--p 8080:8080 -p 50000:50000 ^
--v //var/run/docker.sock:/var/run/docker.sock ^
--v jenkins_home:/var/jenkins_home ^
-jenkins-dind
-
-Install Python and Tools in the Container
-docker exec -u root -it <container_name_or_id> apt update -y
+  --privileged ^
+  -p 8080:8080 -p 50000:50000 ^
+  -v //var/run/docker.sock:/var/run/docker.sock ^
+  -v jenkins_home:/var/jenkins_home ^
+  jenkins-dind
+🐍 Install Python and Tools in the Container
+bash
+Copy
+Edit
+docker exec -u root -it jenkins-dind apt update -y
 docker exec -u root -it jenkins-dind apt install -y python3
 docker exec -u root -it jenkins-dind python3 --version
 docker exec -u root -it jenkins-dind ln -s /usr/bin/python3 /usr/bin/python
 docker exec -u root -it jenkins-dind python --version
 docker exec -u root -it jenkins-dind apt install -y python3-pip
 docker exec -u root -it jenkins-dind apt install -y python3-venv
-
-
-Jenkinsfile
+🧪 Jenkinsfile
+groovy
+Copy
+Edit
 pipeline {
     agent any
-    
+
     stages {
         stage('Build Docker image') {
             steps {
@@ -69,59 +83,57 @@ pipeline {
         }
     }
 }
+🔍 Trivy FileSystem Scan
+Install Trivy:
 
-Trivy FileSystem Scan
-Install Trivy
-
+bash
+Copy
+Edit
 docker exec -u root -it jenkins-dind bash
 curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.57.1
-
-
-Additional Steps
-Add Jenkins User to Docker Group
+👥 Add Jenkins User to Docker Group
+bash
+Copy
+Edit
 docker exec -u root -it jenkins-dind bash
 groupadd docker
 usermod -aG docker jenkins
-usermod -aG root Jenkins
-
-Sample Dockerfile for Python Application
-# Use a lightweight Python image
+usermod -aG root jenkins
+🐍 Sample Dockerfile for Python Application
+Dockerfile
+Copy
+Edit
 FROM python:slim
 
-# Set environment variables to prevent Python from writing .pyc files & Ensure Python output is not buffered
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# Set the working directory
 WORKDIR /app
 
-# Install system dependencies required by LightGBM
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libgomp1 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy the application code
 COPY . .
 
-# Install the package in editable mode
 RUN pip install --no-cache-dir -e .
 
-# Train the model before running the application
 RUN python main.py
 
-# Expose the port that Flask will run on
 EXPOSE 5000
 
-# Command to run the app
 CMD ["python", "application.py"]
-
-
-AWS Deployment
+☁️ AWS Deployment
 Configure AWS CLI
+bash
+Copy
+Edit
 aws configure
-
 Install AWS CLI in the Container
+bash
+Copy
+Edit
 docker exec -u root -it jenkins-dind bash
 aws --version
 apt update && apt upgrade -y
@@ -132,15 +144,16 @@ sudo ./aws/install
 aws --version
 exit
 docker restart jenkins-dind
-
-Update ECS Service
-sh "aws ecs update-service --cluster clustername --service servicename --force-new-deployment"
-
-
-Summary
+🔄 Update ECS Service
+bash
+Copy
+Edit
+sh "aws ecs update-service --cluster <cluster-name> --service <service-name> --force-new-deployment"
+✅ Summary
 This setup provides:
 
 A Jenkins environment integrated with Docker.
+
 Trivy for filesystem scanning.
+
 AWS CLI for deployment.
-Follow the above steps carefully to ensure a smooth setup and deployment experience.
