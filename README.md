@@ -1,4 +1,3 @@
-# CI_CD_Deployment_using_Jenkins
 Jenkins with Docker and AWS Deployment
 Overview
 This README provides a comprehensive guide to setting up a Jenkins instance with Docker-in-Docker (DinD), installing necessary tools, building and deploying Docker images, and integrating AWS CLI for deployment.
@@ -29,11 +28,14 @@ VOLUME /var/lib/docker
 
 # Switch back to the Jenkins user
 USER jenkins
+
 Commands
 Build Docker Image
 docker build -t jenkins-dind .
+
 Kill Process on Port 8080 (Windows)
 netstat -ano | find ":8080"            taskkill /PID <PID> /F
+
 Run Jenkins with Docker-in-Docker
 docker run -d --name jenkins-dind ^
 --privileged ^
@@ -41,6 +43,7 @@ docker run -d --name jenkins-dind ^
 -v //var/run/docker.sock:/var/run/docker.sock ^
 -v jenkins_home:/var/jenkins_home ^
 jenkins-dind
+
 Install Python and Tools in the Container
 docker exec -u root -it <container_name_or_id> apt update -y
 docker exec -u root -it jenkins-dind apt install -y python3
@@ -49,6 +52,8 @@ docker exec -u root -it jenkins-dind ln -s /usr/bin/python3 /usr/bin/python
 docker exec -u root -it jenkins-dind python --version
 docker exec -u root -it jenkins-dind apt install -y python3-pip
 docker exec -u root -it jenkins-dind apt install -y python3-venv
+
+
 Jenkinsfile
 pipeline {
     agent any
@@ -64,16 +69,21 @@ pipeline {
         }
     }
 }
+
 Trivy FileSystem Scan
 Install Trivy
+
 docker exec -u root -it jenkins-dind bash
 curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.57.1
+
+
 Additional Steps
 Add Jenkins User to Docker Group
 docker exec -u root -it jenkins-dind bash
 groupadd docker
 usermod -aG docker jenkins
 usermod -aG root Jenkins
+
 Sample Dockerfile for Python Application
 # Use a lightweight Python image
 FROM python:slim
@@ -105,9 +115,12 @@ EXPOSE 5000
 
 # Command to run the app
 CMD ["python", "application.py"]
+
+
 AWS Deployment
 Configure AWS CLI
 aws configure
+
 Install AWS CLI in the Container
 docker exec -u root -it jenkins-dind bash
 aws --version
@@ -119,8 +132,11 @@ sudo ./aws/install
 aws --version
 exit
 docker restart jenkins-dind
+
 Update ECS Service
 sh "aws ecs update-service --cluster clustername --service servicename --force-new-deployment"
+
+
 Summary
 This setup provides:
 
