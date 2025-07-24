@@ -157,3 +157,7 @@ A Jenkins environment integrated with Docker.
 Trivy for filesystem scanning.
 
 AWS CLI for deployment.
+
+
+go on this url otherwise
+https://github.com/data-guru0/AWS-DEPLOYMENT-CI-CD-STEPS.git
